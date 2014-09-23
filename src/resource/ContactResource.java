@@ -1,6 +1,5 @@
 package resource;
 
-import java.io.Reader;
 import java.net.URI;
 import java.util.List;
 
@@ -16,16 +15,14 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
-
-
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.JAXBElement;
 
-import entity.Contact;
 import service.ContactDao;
-import service.DaoFactory;
+import service.jpa.JpaDaoFactory;
+import entity.Contact;
 /**
  * ContactResource provides RESTful web resources using JAX-RS
  * annotations to map requests to request handling code,
@@ -36,7 +33,7 @@ import service.DaoFactory;
  */
 @Path("/contacts")
 public class ContactResource {
-	ContactDao dao = DaoFactory.getInstance().getContactDao();
+	ContactDao dao = JpaDaoFactory.getInstance().getContactDao();
 	
 	/**
 	 * Get a list of all contacts 
@@ -44,8 +41,8 @@ public class ContactResource {
 	 * @return response if it ok or not
 	 */
 	@GET
-	@Produces( MediaType.APPLICATION_XML)
-	public Response getAllContact( @QueryParam("q") String title ){
+	@Produces( MediaType.APPLICATION_XML )
+	public Response getAllContact( @QueryParam("title") String title ){
 		GenericEntity<List<Contact>> entity = null;
 		Response response = null;
 		if( title == null ){
@@ -111,9 +108,9 @@ public class ContactResource {
 	{
 		Contact contact = element.getValue();
 		contact.setId(id);
-		if(dao.update( contact )){
-			return Response.status(Status.BAD_REQUEST).build();
-		}
+		System.out.println(contact.getTitle() +" "+contact.getName());
+		dao.update( contact );
+//			return Response.status(Status.BAD_REQUEST).build();
 		URI loc = uriInfo.getAbsolutePath();
 		return Response.ok(loc+"/"+contact.getId()).build();
 	
@@ -125,9 +122,9 @@ public class ContactResource {
 	 */
 	@DELETE
 	@Path("{id}")
-	public void delete(@PathParam("id") long id)
+	public Response delete(@PathParam("id") long id)
 	{
-		dao.delete(id);
+		return Response.ok(dao.delete(id)).build();
 	}
 	
 	

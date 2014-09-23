@@ -7,6 +7,8 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.glassfish.jersey.server.ServerProperties;
 
+import service.DaoFactory;
+
 
 /**
  * <p>
@@ -117,6 +119,7 @@ public class JettyMain {
 		
 		System.out.println("Server started.  Press ENTER to stop it.");
 		int ch = System.in.read();
+		DaoFactory.getInstance().shutdown();
 		System.out.println("Stopping server.");
 		server.stop();
 	}

@@ -1,9 +1,15 @@
 package entity;
 import java.io.Serializable;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -11,13 +17,18 @@ import javax.xml.bind.annotation.XmlRootElement;
  * title is text to display for this contact in a list of contacts,
  * such as a nickname or company name.
  */
+
 @XmlRootElement(name="contact")
 @XmlAccessorType(XmlAccessType.FIELD)
+@Entity 
+@Table(name="contacts")
 public class Contact implements Serializable {
 	private static final long serialVersionUID = 1L;
-
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO) 
 	@XmlAttribute
 	private long id;
+	@XmlElement(required=true,nillable=false)
 	private String name;
 	private String title;
 	private String email;
@@ -94,6 +105,22 @@ public class Contact implements Serializable {
 	}
 	
 	/**
+	 * Copy another contact's data into this contact.
+	 * The id of this contact is not changed.  This allows
+	 * complete updates of an existing contact without
+	 * changing the object's identity.
+	 * @param other another Contact whose fields are copied to this contact.
+	 */
+	public void copyOf(Contact other) {
+		if (other == null) throw new IllegalArgumentException("source contact may not be null");
+		// don't check the id value. Its the caller's responsibility to supply correct argument
+		this.setTitle(other.getTitle()); 
+		this.setName(other.getName()); 
+		this.setEmail(other.getEmail());
+		this.setPhotoUrl(other.getPhotoUrl());
+	}
+	
+	/**
 	 * Update this contact's data from another Contact.
 	 * The id field of the update must either be 0 or the same value as this contact!
 	 * @param update the source of update values
@@ -104,10 +131,14 @@ public class Contact implements Serializable {
 			throw new IllegalArgumentException("Update contact must have same id as contact to update");
 		// Since title is used to display contacts, don't allow empty title
 		if (! isEmpty( update.getTitle()) ) this.setTitle(update.getTitle()); // empty nickname is ok
+		else this.setTitle("");
 		// other attributes: allow an empty string as a way of deleting an attribute in update (this is hacky)
 		if (update.getName() != null ) this.setName(update.getName()); 
+		else this.setName("");
 		if (update.getEmail() != null) this.setEmail(update.getEmail());
+		else this.setEmail("");
 		if (update.getPhotoUrl() != null) this.setPhotoUrl(update.getPhotoUrl());
+		else this.setPhotoUrl("");
 	}
 	
 	/**
