@@ -1,6 +1,7 @@
 package resource;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 import javax.ws.rs.Consumes;
@@ -69,7 +70,7 @@ public class ContactResource {
 	{
 	Contact contact = dao.find(id);
 	if(contact == null ){
-		return Response.status(Status.BAD_REQUEST).build();
+		return Response.status(Status.NOT_FOUND).build();
 	}
 	return Response.ok(contact).build();
 	}
@@ -79,18 +80,20 @@ public class ContactResource {
 	 * @param element is the contact
 	 * @param uriInfo uri of the url
 	 * @return response if it ok or not
+	 * @throws URISyntaxException 
 	 */
 	@POST
 	@Consumes( MediaType.APPLICATION_XML )
-	public Response post( JAXBElement<Contact> element, @Context UriInfo uriInfo ) 
+	public Response post( JAXBElement<Contact> element, @Context UriInfo uriInfo ) throws URISyntaxException 
 	{
 		Contact contact = element.getValue();
 		if(contact == null){
 			Response.status(Status.BAD_REQUEST).build();
 		}
+		
 		dao.save( contact );
 		URI loc = uriInfo.getAbsolutePath();
-		return Response.ok(loc+"/"+contact.getId()).build();
+		return Response.created(new URI(loc+"/"+contact.getId())).build();
 	
 	}
 	
@@ -106,8 +109,13 @@ public class ContactResource {
 	@Path("{id}")
 	public Response put( JAXBElement<Contact> element, @Context UriInfo uriInfo, @PathParam("id") long id) 
 	{
+		
 		Contact contact = element.getValue();
+		if(contact.getId() != id && contact.getId() != 0){
+			return Response.status(Status.BAD_REQUEST).build();
+		}
 		contact.setId(id);
+		
 		System.out.println(contact.getTitle() +" "+contact.getName());
 		dao.update( contact );
 //			return Response.status(Status.BAD_REQUEST).build();

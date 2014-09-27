@@ -40,7 +40,7 @@ public class MemDaoFactory extends DaoFactory {
 				daoInstance.save(c);
 		} catch (JAXBException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+//			e.printStackTrace();
 		}
 		
 		
