@@ -7,13 +7,17 @@ import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.HttpMethod;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.CacheControl;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -35,7 +39,13 @@ import entity.Contact;
 @Path("/contacts")
 public class ContactResource {
 	ContactDao dao = JpaDaoFactory.getInstance().getContactDao();
-	
+	CacheControl cc;
+	public ContactResource() {
+		// TODO Auto-generated constructor stub
+		cc = new CacheControl();
+		cc.setMaxAge(86400);
+		cc.setPrivate(true);
+	}
 	/**
 	 * Get a list of all contacts 
 	 * @param title the title the we want to search
@@ -43,19 +53,27 @@ public class ContactResource {
 	 */
 	@GET
 	@Produces( MediaType.APPLICATION_XML )
-	public Response getAllContact( @QueryParam("title") String title ){
+	public Response getAllContact(@HeaderParam("If-None-Match") String im, @QueryParam("title") String title ){
+		
 		GenericEntity<List<Contact>> entity = null;
 		Response response = null;
 		if( title == null ){
-			entity = new GenericEntity<List<Contact>>(dao.findAll()) {};
-			
+			entity = new GenericEntity<List<Contact>>(dao.findAll()) {};	
 		}else{
 			if(dao.findByTitle(title) == null){
 				return response.status(Status.NOT_FOUND).build();
 			}
 			entity = new GenericEntity<List<Contact>>(dao.findByTitle(title)) {};
+			
 		}
-		return response = Response.ok(entity).build();
+		EntityTag etag = new EntityTag(entity.hashCode()+"");
+		if( im != null ){
+			if( !im.equals(etag.getValue()) ){
+				return response = Response.ok(entity).cacheControl(cc).tag(etag).build();
+			}
+		}
+		return Response.status(Status.NOT_MODIFIED).cacheControl(cc).tag(etag).build();
+		
 	}
 	
 	/**
@@ -66,13 +84,23 @@ public class ContactResource {
 	@GET
 	@Path("{id}")
 	@Produces( MediaType.APPLICATION_XML)
-	public Response getContact( @PathParam("id") long id ) 
+	public Response getContact(@HeaderParam("If-None-Match") String im, @PathParam("id") long id ) 
 	{
 	Contact contact = dao.find(id);
 	if(contact == null ){
 		return Response.status(Status.NOT_FOUND).build();
 	}
-	return Response.ok(contact).build();
+	EntityTag etag = new EntityTag(contact.hashCode()+"");
+	if( im != null ){
+		if( !im.equals(etag.getValue()) ){
+			return Response.ok(contact).cacheControl(cc).tag(etag).build();
+		}
+		else{
+			return Response.status(Status.NOT_MODIFIED).cacheControl(cc).tag(etag).build();
+		}
+	}
+	
+	return Response.ok(contact).cacheControl(cc).tag(etag).build();
 	}
 	
 	/**
@@ -90,10 +118,10 @@ public class ContactResource {
 		if(contact == null){
 			Response.status(Status.BAD_REQUEST).build();
 		}
-		
+		EntityTag etag = new EntityTag(contact.hashCode()+"");
 		dao.save( contact );
 		URI loc = uriInfo.getAbsolutePath();
-		return Response.created(new URI(loc+"/"+contact.getId())).build();
+		return Response.created(new URI(loc+"/"+contact.getId())).cacheControl(cc).tag(etag).build();
 	
 	}
 	
@@ -107,7 +135,7 @@ public class ContactResource {
 	@PUT
 	@Consumes( MediaType.APPLICATION_XML )
 	@Path("{id}")
-	public Response put( JAXBElement<Contact> element, @Context UriInfo uriInfo, @PathParam("id") long id) 
+	public Response put( JAXBElement<Contact> element,@HeaderParam("If-Match") String im, @Context UriInfo uriInfo, @PathParam("id") long id) 
 	{
 		
 		Contact contact = element.getValue();
@@ -115,12 +143,18 @@ public class ContactResource {
 			return Response.status(Status.BAD_REQUEST).build();
 		}
 		contact.setId(id);
+		EntityTag etag = new EntityTag(dao.find(id).hashCode()+"");
+
+		if( im != null ){
+			if( im.equals(etag.getValue()) ){
+				dao.update( contact );
+				URI loc = uriInfo.getAbsolutePath();
+				etag = new EntityTag(contact.hashCode()+"");
+				return Response.ok(loc+"/"+contact.getId()).cacheControl(cc).tag(etag).build();
+			}
+		}
 		
-		System.out.println(contact.getTitle() +" "+contact.getName());
-		dao.update( contact );
-//			return Response.status(Status.BAD_REQUEST).build();
-		URI loc = uriInfo.getAbsolutePath();
-		return Response.ok(loc+"/"+contact.getId()).build();
+		return Response.status(Status.BAD_REQUEST).cacheControl(cc).tag(etag).build();
 	
 	}
 	
@@ -130,9 +164,17 @@ public class ContactResource {
 	 */
 	@DELETE
 	@Path("{id}")
-	public Response delete(@PathParam("id") long id)
+	public Response delete(@HeaderParam("If-Match") String im,@PathParam("id") long id)
 	{
-		return Response.ok(dao.delete(id)).build();
+		Contact contact = dao.find(id);
+		EntityTag etag = new EntityTag(contact.hashCode()+"");
+		if( im != null ){
+			if( im.equals(etag.getValue()) ){
+				return Response.status(Status.OK).cacheControl(cc).tag(etag).build();
+			}
+		}
+		dao.delete(id);
+		return Response.status(Status.PRECONDITION_FAILED).build();
 	}
 	
 	

@@ -31,7 +31,7 @@ public class WebServiceTest {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	} 
+	}  
 	@AfterClass
 	public static void doLast( ) {
 		// stop the Jetty server after the last test

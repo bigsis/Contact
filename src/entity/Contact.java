@@ -43,6 +43,14 @@ public class Contact implements Serializable {
 		this.email = email;
 		this.photoUrl = "";
 	}
+	
+
+
+	@Override
+	public int hashCode() {
+		String s = this.title + this.name + this.email + this.photoUrl;
+		return s.hashCode();
+	}
 
 	public Contact(long id) {
 		this.id = id;
