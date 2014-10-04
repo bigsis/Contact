@@ -154,7 +154,7 @@ public class ContactResource {
 			}
 		}
 		
-		return Response.status(Status.BAD_REQUEST).cacheControl(cc).tag(etag).build();
+		return Response.status(Status.PRECONDITION_FAILED).cacheControl(cc).tag(etag).build();
 	
 	}
 	
