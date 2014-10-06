@@ -33,7 +33,7 @@ public class JpaContactDao implements ContactDao {
 	 */
 	public JpaContactDao(EntityManager em) {
 		this.em = em;
-		createTestContact( );
+//		createTestContact( );
 	}
 	
 	/** add contacts for testing. */
@@ -101,12 +101,14 @@ public class JpaContactDao implements ContactDao {
 	@Override
 	public boolean delete(long id) {
 		EntityTransaction tx = em.getTransaction();
+// Wrong sequence
 		tx.begin();
 		Contact contact = em.find(Contact.class, id);
 		if( contact == null ){
 			tx.commit();
 			return false;
 		}
+// must use try catch rollback
 		em.remove(contact);
 		tx.commit();
 		return true;
@@ -135,6 +137,8 @@ public class JpaContactDao implements ContactDao {
 	@Override
 	public boolean update(Contact update) {
 		EntityTransaction tx = em.getTransaction();
+// naive code. What if update.getId() not found?
+// must use try catch rollback
 		tx.begin();
 		em.find(Contact.class, update.getId());
 		em.merge(update);

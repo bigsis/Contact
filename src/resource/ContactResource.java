@@ -50,6 +50,7 @@ public class ContactResource {
 			entity = new GenericEntity<List<Contact>>(dao.findAll()) {};
 			
 		}else{
+// INEFFICIENT DUPLICATE call to findByTitle
 			if(dao.findByTitle(title) == null){
 				return response.status(Status.NOT_FOUND).build();
 			}
@@ -68,6 +69,7 @@ public class ContactResource {
 	@Produces( MediaType.APPLICATION_XML)
 	public Response getContact( @PathParam("id") long id ) 
 	{
+// Code not indented correctly.
 	Contact contact = dao.find(id);
 	if(contact == null ){
 		return Response.status(Status.NOT_FOUND).build();
@@ -90,7 +92,7 @@ public class ContactResource {
 		if(contact == null){
 			Response.status(Status.BAD_REQUEST).build();
 		}
-		
+// Should check return value from save
 		dao.save( contact );
 		URI loc = uriInfo.getAbsolutePath();
 		return Response.created(new URI(loc+"/"+contact.getId())).build();
@@ -117,6 +119,7 @@ public class ContactResource {
 		contact.setId(id);
 		
 		System.out.println(contact.getTitle() +" "+contact.getName());
+// Should check return value from update
 		dao.update( contact );
 //			return Response.status(Status.BAD_REQUEST).build();
 		URI loc = uriInfo.getAbsolutePath();
@@ -132,6 +135,7 @@ public class ContactResource {
 	@Path("{id}")
 	public Response delete(@PathParam("id") long id)
 	{
+// there should be 3 cases here
 		return Response.ok(dao.delete(id)).build();
 	}
 	

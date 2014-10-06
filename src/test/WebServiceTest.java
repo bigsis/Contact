@@ -17,10 +17,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import resource.JettyMain;
-
+// No Javadoc. Next time you get score = 0 for this.
 public class WebServiceTest {
 	private static String serviceUrl;
 	private static HttpClient client;
+// Should have blank line between methods.
 	@BeforeClass
 	public static void doFirst( ) {
 		serviceUrl = JettyMain.startServer( 8080 );
@@ -39,7 +40,7 @@ public class WebServiceTest {
 	}
 	
 
-
+// Incorrect indentation. 
 
 			 /**
 			  * Test Success GET.
